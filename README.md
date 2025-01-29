@@ -1,4 +1,4 @@
-## ACRO: Tools for the Automatic Checking of Research Outputs
+## ACRO: Tools for the Semi-Automatic Checking of Research Outputs
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat)](https://opensource.org/licenses/MIT)
 [![CRAN](https://www.r-pkg.org/badges/version/acro)](https://CRAN.R-project.org/package=acro)
@@ -7,14 +7,20 @@
 
 This repository maintains the ACRO R package, which is an interface to the Python [ACRO](https://github.com/AI-SDC/ACRO) package.
 
-ACRO (Automatic Checking of Research Outputs) is an open source tool for automating the [statistical disclosure control](https://en.wikipedia.org/wiki/Statistical_disclosure_control) (SDC) of research outputs. ACRO assists researchers and output checkers by distinguishing between research output that is safe to publish, output that requires further analysis, and output that cannot be published because of a substantial risk of disclosing private data.
+ACRO is a free and open source tool that supports the semi-automated checking of research outputs (SACRO) for privacy disclosure within secure data environments. SACRO is a framework that applies best-practice principles-based [statistical disclosure control](https://en.wikipedia.org/wiki/Statistical_disclosure_control) (SDC) techniques on-the-fly as researchers conduct their analysis. SACRO is designed to assist human checkers rather than seeking to replace them as with current automated rules-based approaches.
 
-It does this by providing a light-weight 'skin' that sits over well-known analysis tools, in a variety of languages researchers might use. This adds functionality to:
+The ACRO package is a lightweight Python tool that sits over well-known analysis tools that produce outputs such as tables, plots, and statistical models. This package adds functionality to:
 
-*   identify potentially disclosive outputs against a range of commonly used disclosure tests;
-*   suppress outputs where required;
-*   report reasons for suppression;
-*   produce simple summary documents TRE staff can use to streamline their workflow.
+* automatically identify potentially disclosive outputs against a range of commonly used disclosure tests;
+* apply optional disclosure mitigation strategies as requested;
+* report reasons for applying SDC;
+* and produce simple summary documents trusted research environment staff can use to streamline their workflow and maintain auditable records.
+
+This creates an explicit change in the dynamics so that SDC is something done with researchers rather than to them, and enables more efficient communication with checkers.
+
+A graphical user interface ([SACRO-Viewer](https://github.com/AI-SDC/SACRO-Viewer)) supports human checkers by displaying the requested output and results of the checks in an immediately accessible format, highlighting identified issues, potential mitigation options, and tracking decisions made.
+
+Additional programming languages such as this R package are supported by providing front-end packages that interface with the core ACRO Python back-end.
 
 ### Installation
 
@@ -24,41 +30,14 @@ Install the **acro** package from CRAN as follows:
 install.packages("acro")
 ```
 
-#### Notes for Python 3.13
-
-ACRO currently depends on numpy version 1.x.x for which no pre-compiled wheels are available within pip for Python 3.13. Therefore, in this scenario, numpy must be built from source. This requires the installation of a C++ compiler before pip installing acro.
-
-For Windows, the [Microsoft Visual Studio C++ build tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) will likely need to be installed first.
-
-If you are unable to install the C++ tools, but are able to install multiple versions of Python, you can use the following method to explicitly create the Python virtual environment with your desired `python.exe`.
-
-First identify the location of the `python.exe` needed, which may be in `C:\Program Files\` or in your local `C:\Users\username\AppData\Local\Programs\Python\`.
-
-Then from R, use reticulate to create the virtual environment and install ACRO; see example below. Change the path provided as a version to your Python path (note that forward slashes are required in the path).
-
-```R
->>> library("reticulate")
->>> reticulate::virtualenv_create(envname = "r-acro-0.4.7", version = "C:/Users/username/AppData/Local/Programs/Python/Python310/python.exe", force = TRUE, packages = NULL)
->>> reticulate::py_install("acro", envname = "r-acro-0.4.7")
-```
-
-Finally, the R ACRO library can be used as normal:
-
-```R
->>> library("acro")
->>> acro_init(suppress = TRUE)
-```
-
 ### Usage
 
 Before using any function from the package, an acro object should be initialised using the following R code:
 
 ``` r
 >>> library("acro")
->>> acro_init()
+>>> acro_init(suppress = TRUE)
 ```
-
-Then the functions can be called.
 
 ### Documentation
 
