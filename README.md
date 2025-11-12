@@ -25,11 +25,15 @@ Additional programming languages such as this R package are supported by providi
 
 ### Installation
 
+Prerequisite: you must have [Python](https://www.python.org) pre-installed.
+
 Install the **acro** package from CRAN as follows:
 
 ``` r
-install.packages("acro")
+install.packages("acro" )
 ```
+
+If you are having problems installing the package, please see the more detailed [installation guide](inst/INSTALL.md).
 
 ### Usage
 
@@ -37,8 +41,14 @@ Before using any function from the package, an acro object should be initialised
 
 ``` r
 >>> library("acro")
->>> acro_init(suppress = TRUE)
+>>> acro_init(suppress = TRUE )
 ```
+
+### Try Online with MyBinder
+
+Try an example notebook in [RStudio online](https://mybinder.org/v2/gh/AI-SDC/ACRO-R/main?urlpath=rstudio) on MyBinder.org.
+
+Select the `example-notebook.Rmd` in the bottom-right pane after loading.
 
 ### Documentation
 

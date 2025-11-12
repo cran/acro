@@ -1,7 +1,7 @@
 Package: acro
 Title: A Tool for Semi-Automating the Statistical Disclosure Control of
         Research Outputs
-Version: 0.1.5
+Version: 0.1.6
 Authors@R: c(
   person("Jim", "Smith", role = c("cre","ctb"),
          email = "James.Smith@uwe.ac.uk", comment = c(ORCID = "0000-0001-7908-1859")),
@@ -14,7 +14,7 @@ Description: A Tool for Semi-Automating the Statistical Disclosure Control of Re
 License: MIT + file LICENSE
 Encoding: UTF-8
 RoxygenNote: 7.3.2
-SystemRequirements: Python (>= 3.9)
+SystemRequirements: Python (>= 3.10)
 Imports: reticulate, admiraldev, png
 Depends: R (>= 2.10)
 LazyData: true
@@ -24,10 +24,10 @@ Language: en-US
 URL: https://github.com/AI-SDC/ACRO-R
 BugReports: https://github.com/AI-SDC/ACRO-R/issues
 NeedsCompilation: no
-Packaged: 2025-07-03 07:04:33 UTC; unknown
+Packaged: 2025-11-11 23:38:25 UTC; j4-smith
 Author: Jim Smith [cre, ctb] (ORCID: <https://orcid.org/0000-0001-7908-1859>),
   Maha Albashir [aut, ctb],
   Richard John Preen [aut, ctb] (ORCID:
     <https://orcid.org/0000-0003-3351-8132>)
 Repository: CRAN
-Date/Publication: 2025-07-03 18:30:02 UTC
+Date/Publication: 2025-11-12 00:00:02 UTC
