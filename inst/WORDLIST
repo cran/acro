@@ -1,6 +1,7 @@
 ADR
 Acknowledgement
 Analytics
+Conda
 EPSRC
 GRAIMATTER
 HDR
@@ -11,9 +12,17 @@ MyBinder
 RStudio
 SACRO
 SDC
+TREs
+TREvolution
+Transformative
 Xplore
+YAML
+analytics
 auditable
 codecov
+conda
+config
+crosstab
 disclosive
 github
 https
@@ -26,3 +35,4 @@ programme
 scipy
 www
 xlsx
+yaml

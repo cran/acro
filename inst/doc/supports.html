@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>What ACRO-R Supports</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">What ACRO-R Supports</h1>
+
+
+
+<div id="what-acro-r-supports" class="section level1">
+<h1>What ACRO-R Supports</h1>
+<p>This page provides a comprehensive overview of the capabilities ACRO
+supports. ACRO supports a wide range of statistical analysis functions
+with automated disclosure control.</p>
+<div id="supported-data-analysis-functions" class="section level2">
+<h2>Supported Data Analysis Functions</h2>
+<div id="table-creation-cross-tabulation" class="section level3">
+<h3>Table Creation &amp; Cross-tabulation</h3>
+<p><strong>For Researchers:</strong> Create frequency tables and
+cross-tabulations with automatic cell suppression for small counts.</p>
+<p><strong>What ACRO Supports:</strong></p>
+<ul>
+<li><strong><code>crosstab()</code></strong> - Cross-tabulation of two
+or more variables with frequency counting</li>
+<li><strong><code>pivot_table()</code></strong> - Spreadsheet-style
+pivot tables with aggregation functions</li>
+<li><strong><code>table()</code></strong> - Simple frequency tables for
+categorical data (R interface only)</li>
+</ul>
+<p><strong>Technical Details:</strong></p>
+<ul>
+<li>ACRO suppresses, and reports the reason why, the value of an
+aggregation statistic (mean, median, variance, etc.) for any cell is
+deemed to be sensitive.</li>
+<li>The current version of ACRO supports the three most common tests for
+sensitivity: ensuring the number of contributors is above a frequency
+threshold, and testing for dominance via N-K rules.
+<ul>
+<li><strong>N-K Rule</strong>: A dominance test where if the top N
+contributors account for more than K% of the total, the cell is
+considered disclosive.</li>
+<li><strong>Frequency Threshold</strong>: Cells with fewer than a
+specified number of contributors are suppressed.</li>
+</ul></li>
+<li>All thresholds are configurable via YAML configuration files.</li>
+<li>For detailed methodology, see our <a href="https://doi.org/10.1109/TP.2025.3566052">research paper</a>.</li>
+<li>Automatic flagging of negative or missing values for human
+review.</li>
+</ul>
+<p><strong>Example Use Cases:</strong> - Survey response analysis by
+demographics - Clinical trial outcome tables - Market research
+cross-tabulations - Educational assessment reporting</p>
+</div>
+<div id="statistical-modeling" class="section level3">
+<h3>Statistical Modeling</h3>
+<p><strong>For Researchers:</strong> Run regression analyses with
+automated checks on model outputs and residual degrees of freedom.</p>
+<p><strong>What ACRO Supports:</strong></p>
+<ul>
+<li><strong><code>ols()</code></strong> - Ordinary Least Squares linear
+regression</li>
+<li><strong><code>logit()</code></strong> - Logistic regression for
+binary outcomes</li>
+<li><strong><code>probit()</code></strong> - Probit regression for
+binary outcomes</li>
+</ul>
+<p><strong>Technical Details:</strong> - For regressions such as linear,
+probit, and logit, the tests verify that the number of residual degrees
+of freedom exceeds a threshold. - The functionality acts as a wrapper
+around standard statistical packages.</p>
+<p><strong>Example Use Cases:</strong> - Economic modeling and policy
+analysis - Medical research and clinical studies - Social science
+research - Business analytics and forecasting</p>
+</div>
+</div>
+<div id="disclosure-control-features" class="section level2">
+<h2>Disclosure Control Features</h2>
+<div id="automated-sensitivity-testing" class="section level3">
+<h3>Automated Sensitivity Testing</h3>
+<p><strong>What ACRO Checks:</strong></p>
+<p><strong>For Tables:</strong> - Minimum cell counts (frequency
+thresholds) - Dominance rules (N-K rules for concentration) - Presence
+of negative or missing values</p>
+<p><strong>For Statistical Models:</strong> - Residual degrees of
+freedom thresholds - Model fit diagnostics - Parameter significance
+testing</p>
+<p><strong>For Non-Technical Users:</strong> ACRO automatically
+identifies when research outputs might reveal sensitive information
+about individuals or organizations, applying industry-standard privacy
+protection rules without requiring manual review of every result.</p>
+</div>
+<div id="output-management" class="section level3">
+<h3>Output Management</h3>
+<p><strong>What ACRO Provides:</strong></p>
+<ul>
+<li><strong>Suppression Masks</strong> - Clear indication of which
+results are hidden and why</li>
+<li><strong>Summary Reports</strong> - Detailed explanation of all
+disclosure checks performed</li>
+<li><strong>Audit Trails</strong> - Complete record of all analysis
+steps and decisions</li>
+<li><strong>Exception Handling</strong> - Process for requesting release
+of flagged outputs</li>
+</ul>
+<p><strong>Workflow Integration:</strong> The <code>finalise()</code>
+function will: 1. Check that each output with “fail” or “review” status
+has an exception (if not you will be asked to enter one). 2. Write the
+outputs to a directory. This directory contains everything that the
+output checkers need to make a decision.</p>
+</div>
+</div>
+<div id="supported-environments" class="section level2">
+<h2>Supported Environments</h2>
+<div id="research-environments" class="section level3">
+<h3>Research Environments</h3>
+<p><strong>Where ACRO Works:</strong> - Trusted Research Environments
+(TREs) - Data safe havens - Secure data centers - Academic research
+computing facilities - Government statistical offices - Healthcare
+research environments</p>
+</div>
+</div>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
