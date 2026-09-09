@@ -3,18 +3,58 @@
 #' @param index Values to group by in the rows.
 #' @param columns Values to group by in the columns.
 #' @param values  Array of values to aggregate according to the factors. Requires `aggfunc` be specified.
+#' @param rownames If passed, must match number of row arrays passed.
+#' @param colnames If passed, must match number of column arrays passed.
 #' @param aggfunc If specified, requires `values` be specified as well.
+#' @param margins dd row/column margins (subtotals).
+#' @param margins_name Name of the row/column that will contain the totals when margins is True.
+#' @param dropna Do not include columns whose entries are all NaN.
+#' @param normalize Normalize by dividing all values by the sum of values.
+#' @param show_suppressed how the totals are being calculated when the suppression is true
 #'
 #' @return Cross tabulation of the data
 #' @export
 
-acro_crosstab <- function(index, columns, values = NULL, aggfunc = NULL) {
+acro_crosstab <- function(index, columns, values = NULL, rownames = NULL, colnames = NULL, aggfunc = NULL, margins = FALSE, margins_name = "All", dropna = TRUE, normalize = FALSE, show_suppressed = FALSE) {
   if (is.null(acroEnv$ac)) {
     stop("ACRO has not been initialised. Please first call acro_init()")
   }
-  table <- acroEnv$ac$crosstab(index, columns, values = values, aggfunc = aggfunc)
+
+  # Convert the values into a NumPy array so that the Python ACRO crosstab function accepts them
+  np <- reticulate::import("numpy", convert = TRUE)
+  py_values <- if (!is.null(values)) np$array(values) else NULL
+
+  py_table <- tryCatch(
+    {
+      acroEnv$ac$crosstab(index, columns, values = py_values, rownames = rownames, colnames = colnames, aggfunc = aggfunc, margins = margins, margins_name = margins_name, dropna = dropna, normalize = normalize, show_suppressed = show_suppressed)
+    },
+    error = function(e) {
+      # Check if Python threw the ValueError about an unsupported aggfunc
+      if (grepl("ValueError: aggfunc", e$message)) {
+        stop(
+          sprintf("Unsupported aggregation function provided: '%s'. Allowed functions are: mean, median, sum, std, count, mode.", aggfunc),
+          call. = FALSE
+        )
+      }
+      # 2. Check if Python threw the missing values column error
+      else if (grepl("If you pass an aggregation function to crosstab", e$message)) {
+        stop(
+          "If you pass an aggregation function to crosstab, you must also specify a single values column to aggregate over.",
+          call. = FALSE
+        )
+      }
+      # any other unexpected errors
+      else {
+        stop(e) # nocov
+      }
+    }
+  )
+
+  table <- reticulate::py_to_r(py_table)
+
   return(table)
 }
+
 
 #' Compute a simple cross tabulation of two (or more) factors.
 #'
@@ -22,12 +62,14 @@ acro_crosstab <- function(index, columns, values = NULL, aggfunc = NULL) {
 #' @param columns Values to group by in the columns.
 #' @param dnn The names to be given to the dimensions in the result
 #' @param deparse.level Controls how the default `dnn` is constructed.
+#' @param exclude levels to remove for all factors in index/columns
+#' @param useNA whether to include NA values in the table
 #' @param ... Any other parameters.
 #'
 #' @return Cross tabulation of the data
 #' @export
 
-acro_table <- function(index, columns, dnn = NULL, deparse.level = 0, ...) {
+acro_table <- function(index, columns, dnn = NULL, deparse.level = 0, useNA = "no", exclude = NULL, ...) {
   if (is.null(acroEnv$ac)) {
     stop("ACRO has not been initialised. Please first call acro_init().")
   }
@@ -55,21 +97,200 @@ acro_table <- function(index, columns, dnn = NULL, deparse.level = 0, ...) {
           acroEnv$col_names <- list("")
         }
       )
-    } else if (deparse.level == 2) {
-      acroEnv$row_names <- list(deparse((substitute(index))))
-      acroEnv$col_names <- list(deparse(substitute(columns)))
     }
   } else {
     acroEnv$row_names <- list(dnn[1])
     acroEnv$col_names <- list(dnn[2])
   }
 
-  table <- acroEnv$ac$crosstab(index, columns, rownames = acroEnv$row_names, colnames = acroEnv$col_names)
+  # Handling the exclude parameter
+  if (useNA != "no" && !is.null(exclude)) {
+    if (any(is.na(exclude))) warning("'exclude' containing NA and 'useNA' != \"no\"' are a bit contradicting")
+
+    # Remove the NA and NaN from the exclude list, if they exist
+    exclude <- exclude[!(is.na(exclude) | is.nan(exclude))]
+    if (length(exclude) == 0) exclude <- NULL # nocov
+  }
+
+  if (!is.null(exclude)) {
+    # Exclude everything in the exclude list from the data
+    keep_mask <- !(is_excluded(index, exclude) | is_excluded(columns, exclude))
+
+    index <- index[keep_mask]
+    columns <- columns[keep_mask]
+
+    # Delete any dropped levels
+    if (is.factor(index)) index <- droplevels(index)
+    if (is.factor(columns)) columns <- droplevels(columns)
+  }
+
+  # Handling the useNA parameter
+  if (useNA == "no") {
+    # Remove any NA or NaN from the data
+    keep_mask <- !(is_invalid(index) | is_invalid(columns))
+
+    index <- index[keep_mask]
+    columns <- columns[keep_mask]
+  }
+
+  # Create factors
+  index <- create_factors(index, useNA)
+  columns <- create_factors(columns, useNA)
+
+  # Manually convert index and columns to pandas categorical to convert the R fcators to python categories
+  pd <- reticulate::import("pandas", convert = FALSE)
+  index <- to_pandas_categorical(index, pd)
+  columns <- to_pandas_categorical(columns, pd)
+
+  py_table <- acroEnv$ac$crosstab(index, columns, rownames = acroEnv$row_names, colnames = acroEnv$col_names)
   # Check for any unused arguments
   if (length(list(...)) > 0) {
     warning("Unused arguments were provided: ", paste0(names(list(...)), collapse = ", "), "\n", "Please use the help command to learn more about the function.")
   }
+  # Reset the index and keep the old indexes in a column
+  py_table <- py_table$reset_index()
+
+  # Manually translate the table to R
+  r_dataframe <- reticulate::py_to_r(py_table)
+  table <- as.matrix(r_dataframe[, -1])
+
+  # Convert the string "NA" to the R empty values <NA>
+  index_names <- as.character(r_dataframe[[1]])
+  column_names <- colnames(r_dataframe)[-1]
+
+  index_names[index_names %in% "NA"] <- NA
+  column_names[column_names %in% "NA"] <- NA
+
+  rownames(table) <- index_names
+  colnames(table) <- column_names
+
   return(table)
+}
+
+#' Creates a new data frame. It returns one row for each combination of grouping variables; if there are no grouping variables, the output will have a single row summarising all observations in the input
+#'
+#' @param .data A data frame or a data frame extension
+#' @param ...  Name-value pairs of summary functions. The name will be the name of the variable in the result
+#' @param .groups  Grouping structure of the result
+#' @param .by Optionally, a selection of columns to group by for just this operation, functioning as an alternative to group_by()
+#'
+#' @returns Summary of the data
+#' @export
+
+acro_summarise <- function(.data, ..., .groups = NULL, .by = NULL) {
+  if (is.null(acroEnv$ac)) {
+    stop("ACRO has not been initialised. Please first call acro_init()")
+  }
+
+  by_expr <- rlang::enquo(.by)
+
+  if (!is.null(.groups) && !rlang::quo_is_null(by_expr)) {
+    stop("Can't supply both `.by` and `.groups`.", call. = FALSE)
+  }
+
+  if (dplyr::is_grouped_df(.data) && !rlang::quo_is_null(by_expr)) {
+    stop("Can't supply `.by` when `.data` is a grouped data frame.", call. = FALSE)
+  }
+
+  # Handling the index parameter for the pivot_table
+  if (!rlang::quo_is_null(by_expr)) {
+    # Use the .by provided by the user
+    index <- tidyselect::vars_select(names(.data), {{ .by }})
+  } else {
+    # Use the existing groups from group_by()
+    index <- dplyr::group_vars(.data)
+  }
+
+  # Handling the agg_func and the value parameters for the pivot_table
+  summary_funcs <- rlang::enquos(..., .named = TRUE)
+  summary_funcs <- purrr::map(summary_funcs, parse_summary_expression)
+
+  values <- unname(purrr::map(summary_funcs, "values"))
+  python_aggfuncs <- purrr::map(summary_funcs, "agg_funcs")
+
+  if (length(unique(values)) > 1 && length(unique(python_aggfuncs)) > 1) {
+    # Create the dictionary for the agg functions
+    # Uncomment this when the acro pivot table is accepting dictionaries for the agg_func parameter ie. is handling different agg_funcs with different values
+    # python_aggfuncs <- stats::setNames(python_aggfuncs, values)
+    stop("ACRO currently does not support different aggregation functions for different values.", call. = FALSE)
+  } else {
+    python_aggfuncs <- unique(unname(python_aggfuncs))
+  }
+
+  # Uncomment this when supporting the count function n()
+  # if (length(values[[1]]) == 0) {
+  # values <- NULL
+  # }
+
+  # Handling ungrouped data via a dummy grouping column
+  if (length(index) == 0) {
+    .data$acro_dummy_all <- "All Data"
+    index <- "acro_dummy_all"
+  }
+
+  # Call the python pivot table
+  pd <- reticulate::import("pandas", convert = FALSE)
+  py_df <- reticulate::r_to_py(.data)
+  python_aggfuncs <- reticulate::r_to_py(python_aggfuncs)
+
+  py_result <- acroEnv$ac$pivot_table(
+    data = py_df,
+    index = index,
+    values = unique(values),
+    aggfunc = python_aggfuncs
+  )
+
+  # Clean and rename Columns for the python dataframe
+  py_result <- py_result$reset_index()
+  new_col_names <- c(index, names(summary_funcs))
+
+  # Convert to R dataframe
+  r_output <- reticulate::py_to_r(py_result)
+  colnames(r_output) <- new_col_names
+
+  # Remove the dummy column if it exists
+  if ("acro_dummy_all" %in% names(r_output)) {
+    r_output <- r_output[, names(r_output) != "acro_dummy_all"]
+  }
+  if (identical(index, "acro_dummy_all")) {
+    index <- NULL
+  }
+
+  # Convert to tibble
+  r_output <- tibble::as_tibble(r_output)
+
+  # Handling the .group parameter
+  if (is.null(.groups)) {
+    .groups <- "drop_last"
+  }
+
+  if (.groups == "drop") {
+    r_output <- dplyr::ungroup(r_output)
+  } else if (.groups == "drop_last") {
+    if (length(index) > 1) {
+      new_index <- utils::head(index, -1)
+      r_output <- dplyr::group_by(r_output, dplyr::across(dplyr::all_of(new_index)))
+    } else {
+      r_output <- dplyr::ungroup(r_output)
+    }
+  } else if (.groups == "keep") {
+    if (length(index) > 0) {
+      r_output <- dplyr::group_by(r_output, dplyr::across(dplyr::all_of(index)))
+    } else {
+      r_output <- dplyr::ungroup(r_output)
+    }
+  } else if (.groups == "rowwise") {
+    if (length(index) > 0) {
+      r_output <- dplyr::group_by(r_output, dplyr::across(dplyr::all_of(index)))
+    } else {
+      r_output <- dplyr::ungroup(r_output)
+    }
+  } else {
+    stop("`.groups` must be one of 'drop', 'drop_last', 'keep', or 'rowwise'.", call. = FALSE)
+  }
+
+
+  return(r_output[complete.cases(r_output), ])
 }
 
 #' Pivot table
@@ -87,7 +308,24 @@ acro_pivot_table <- function(data, values = NULL, index = NULL, columns = NULL, 
   if (is.null(acroEnv$ac)) {
     stop("ACRO has not been initialised. Please first call acro_init()")
   }
-  table <- acroEnv$ac$pivot_table(data, values = values, index = index, columns = columns, aggfunc = aggfunc)
+
+  py_table <- tryCatch(
+    {
+      acroEnv$ac$pivot_table(data, values = values, index = index, columns = columns, aggfunc = aggfunc)
+    },
+    error = function(e) {
+      if (grepl("aggfunc", e$message, ignore.case = TRUE)) {
+        stop(
+          sprintf("Unsupported aggregation function provided: '%s'. Allowed functions are: mean, median, sum, std, count, mode.", aggfunc),
+          call. = FALSE
+        )
+      } else {
+        stop(e) # nocov
+      }
+    }
+  )
+
+  table <- reticulate::py_to_r(py_table)
   return(table)
 }
 
@@ -96,18 +334,22 @@ acro_pivot_table <- function(data, values = NULL, index = NULL, columns = NULL, 
 #' @param data The object holding the data.
 #' @param column The column that will be used to plot the histogram.
 #' @param breaks Number of histogram bins to be used.
-#' @param freq If False, the result will contain the number of samples in each bin. If True, the result is the value of the probability density function at the bin.
+#' @param freq If True, the result will contain the number of samples in each bin. If False, the result is the value of the probability density function at the bin.
 #' @param col The color of the plot.
 #' @param filename The name of the file where the plot will be saved.
 #'
 #' @return The histogram.
 #' @export
 
-acro_hist <- function(data, column, breaks = 10, freq = TRUE, col = NULL, filename = "histogram.png") {
+acro_hist <- function(data, column, breaks = "sturges", freq = TRUE, col = NULL, filename = "histogram.png") {
   if (is.null(acroEnv$ac)) {
     stop("ACRO has not been initialised. Please first call acro_init()")
   }
-  histogram <- acroEnv$ac$hist(data = data, column = column, bins = as.integer(breaks), density = freq, color = col, filename = filename)
+  # Get the offset breaks
+  breaks <- get_offset_hist_breaks(data, column, breaks) # nocov
+
+  py_histogram <- acroEnv$ac$hist(data = data, column = column, bins = breaks, density = !freq, color = col, filename = filename)
+  histogram <- reticulate::py_to_r(py_histogram)
   # Load the saved histogram
   image <- png::readPNG(histogram)
   grid::grid.raster(image)
@@ -128,11 +370,84 @@ acro_surv_func <- function(time, status, output, filename = "kaplan-meier.png") 
   if (is.null(acroEnv$ac)) {
     stop("ACRO has not been initialised. Please first call acro_init()")
   }
-  results <- acroEnv$ac$surv_func(time = time, status = status, output = output, filename = filename)
+  py_results <- acroEnv$ac$surv_func(time = time, status = status, output = output, filename = filename)
+  results <- reticulate::py_to_r(py_results)
   if (output == "plot") {
     # Load the saved survival plot
     image <- png::readPNG(results[[2]])
     grid::grid.raster(image)
   }
   return(results)
+}
+
+#' Pie chart
+#'
+#' @param data The object holding the data.
+#' @param column The name of the column that will be used to plot the pie chart.
+#' @param radius The radius of the pie chart.
+#' @param clockwise logical indicating if slices are drawn clockwise or counter clockwise.
+#' @param init.angle number specifying the starting angle (in degrees) for the slices. Defaults to 0 (i.e., ‘3 o'clock’) unless clockwise is true where init.angle defaults to 90 (degrees), (i.e., ‘12 o'clock’).
+#' @param col colors to be used in filling or shading the slices
+#' @param border The color to draw the border.
+#' @param lty The line style.
+#' @param filename The name of the file where the pie chart will be saved.
+#' @param ... Any other parameters.
+#'
+#' @returns The pie chart
+#' @export
+
+acro_pie <- function(data, column, radius = 0.8, clockwise = FALSE, init.angle = if (clockwise) 90 else 0, col = NULL, border = NULL, lty = NULL, filename = "pie.png", ...) {
+  if (is.null(acroEnv$ac)) {
+    stop("ACRO has not been initialised. Please first call acro_init()")
+  }
+
+  # Check for any unused arguments
+  if (length(list(...)) > 0) {
+    warning("Unused arguments were provided: ", paste0(names(list(...)), collapse = ", "), "\n", "Please use the help command to learn more about the function.")
+  }
+
+  # If labels is NULL, try to extract names or levels from the data column
+  # This is commented because acro version 1.0.1 does not accept custom labels
+  # if (is.null(labels)) {
+  #  labels <- unique(data[[column]])
+  # }
+
+  # Handle the boarder and lty parameters
+  wedgeprops <- NULL
+
+  if (!is.null(border)) {
+    wedgeprops <- list()
+    wedgeprops$edgecolor <- border
+  }
+
+  if (!is.null(lty)) {
+    if (identical(lty, 0) || lty == "blank") {
+      wedgeprops$linestyle <- "none"
+    } else {
+      lty_map <- c("solid", "dashed", "dotted", "dashdot")
+      if (is.numeric(lty)) {
+        if (lty >= 1 && lty <= length(lty_map)) {
+          wedgeprops$linestyle <- lty_map[lty]
+        } else {
+          warning("Unsupported line type:", lty, ". Defaulting to solid.")
+          wedgeprops$linestyle <- "solid"
+        }
+      } else if (is.character(lty)) {
+        if (lty %in% c("solid", "dashed", "dotted", "dotdash", "none")) {
+          wedgeprops$linestyle <- lty
+        } else {
+          warning(paste("Unsupported line type:", lty, ". Defaulting to solid."))
+          wedgeprops$linestyle <- "solid"
+        }
+      }
+    }
+  }
+
+  py_pie <- acroEnv$ac$pie(data = data, column = column, radius = radius, counterclock = !clockwise, startangle = init.angle, colors = col, wedgeprops = wedgeprops, filename = filename)
+  r_pie <- reticulate::py_to_r(py_pie)
+
+  # Load the saved pie
+  image <- png::readPNG(r_pie)
+  grid::grid.raster(image)
+  return(r_pie)
 }
