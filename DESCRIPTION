@@ -1,15 +1,15 @@
 Package: acro
 Title: A Tool for Semi-Automating the Statistical Disclosure Control of
         Research Outputs
-Version: 1.0.0
+Version: 1.1.1
 Authors@R: c(
-    person("Jim", "Smith", , "James.Smith@uwe.ac.uk", role = c("cre", "ctb"),
+    person("Jim", "Smith", , "James.Smith@uwe.ac.uk", role = c("aut", "ctb"),
            comment = c(ORCID = "0000-0001-7908-1859")),
-    person("Maha", "Albashir", , "Maha.Albashir@uwe.ac.uk", role = c("aut", "ctb")),
+    person("Maha", "Albashir", , "Maha.Albashir@uwe.ac.uk", role = c("cre", "ctb")),
     person("Richard John", "Preen", , "Richard2.Preen@uwe.ac.uk", role = c("aut", "ctb"),
            comment = c(ORCID = "0000-0003-3351-8132"))
   )
-Maintainer: Jim Smith <James.Smith@uwe.ac.uk>
+Maintainer: Maha Albashir <Maha.Albashir@uwe.ac.uk>
 Description: A Tool for Semi-Automating the Statistical Disclosure Control
     of Research Outputs.
 License: MIT + file LICENSE
@@ -18,19 +18,19 @@ BugReports: https://github.com/AI-SDC/ACRO-R/issues
 Depends: R (>= 2.10)
 Imports: admiraldev, dplyr, graphics, grid, png, purrr, reticulate,
         rlang, tibble, tidyselect, utils
-Suggests: knitr, rmarkdown, spelling, testthat (>= 3.0.0)
+Suggests: knitr, rmarkdown, spelling, testthat (>= 3.0.0), survival
 VignetteBuilder: knitr
-Config/roxygen2/version: 8.1.0
+Config/roxygen2/version: 8.1.1
 Config/testthat/edition: 3
 Encoding: UTF-8
 Language: en-US
 LazyData: true
 SystemRequirements: Python (>= 3.10)
 NeedsCompilation: no
-Packaged: 2026-09-08 23:52:02 UTC; j4-smith
-Author: Jim Smith [cre, ctb] (ORCID: <https://orcid.org/0000-0001-7908-1859>),
-  Maha Albashir [aut, ctb],
+Packaged: 2026-11-09 10:32:52 UTC; m-albashir
+Author: Jim Smith [aut, ctb] (ORCID: <https://orcid.org/0000-0001-7908-1859>),
+  Maha Albashir [cre, ctb],
   Richard John Preen [aut, ctb] (ORCID:
     <https://orcid.org/0000-0003-3351-8132>)
 Repository: CRAN
-Date/Publication: 2026-09-09 07:30:16 UTC
+Date/Publication: 2026-11-09 13:20:14 UTC

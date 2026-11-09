@@ -1,3 +1,9 @@
+#acro 1.1.1
+* Updated the Authors@R field to correctly list maintainer roles.
+
+#acro 1.1.0
+* Added support for Cox Proportional Hazards
+
 # acro 1.0.0
 * Added support for tidyverse e.g. piping and the summarise() method
 * Added support for rounding as a mitigation strategy for tables
